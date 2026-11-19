@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>China Calc — калькулятор</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#242321;--muted:#77736d;--line:#e8e4dd;--accent:#2f6557}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:24px 16px 50px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.brand{font-weight:800;letter-spacing:.12em;font-size:14px}.adminBtn{border:1px solid var(--line);background:transparent;border-radius:999px;padding:9px 14px;color:var(--ink);cursor:pointer}
+.hero{margin:18px 0 22px}.hero h1{font-size:clamp(28px,7vw,42px);line-height:1.08;margin:0 0 10px;letter-spacing:-.04em}.hero p{color:var(--muted);margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 4px 20px #00000004}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 7px}input,select{width:100%;padding:13px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;outline:none}input:focus,select:focus{border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:15px}.field:last-child{margin-bottom:0}.result{background:#203f35;color:#fff;border-radius:18px;padding:20px;margin-top:16px}.result small{opacity:.75}.total{font-size:36px;font-weight:800;letter-spacing:-.03em;margin:2px 0 12px}.rows{display:grid;gap:7px;font-size:14px}.r{display:flex;justify-content:space-between;gap:12px}.r span:first-child{opacity:.75}.hint{font-size:12px;color:var(--muted);margin-top:8px}.sectionTitle{font-weight:750;margin:0 0 14px}.adminPanel{display:none}.adminPanel.open{display:block}.weights{display:grid;grid-template-columns:1fr 120px 40px;gap:8px;align-items:center;margin:8px 0}.weights input{padding:9px}.remove{border:0;background:#f1eee9;border-radius:10px;height:38px;cursor:pointer}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.primary,.secondary{border:0;border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:650}.primary{background:var(--accent);color:white}.secondary{background:#efede8;color:var(--ink)}.notice{font-size:12px;color:var(--muted);margin-top:10px}
+@media(max-width:460px){.grid{grid-template-columns:1fr}.wrap{padding:18px 13px}.card{padding:17px}.weights{grid-template-columns:1fr 95px 38px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="brand">CHINA CALC</div><button class="adminBtn" id="adminOpen">⚙ Администратор</button></header>
+  <section class="hero"><h1>Рассчитай стоимость<br>покупки из Китая</h1><p>Цена товара, комиссия и доставка — всё в одном расчёте.</p></section>
+  <main class="card">
+    <div class="field"><label for="price">Цена товара (¥)</label><input id="price" type="number" min="0" step="0.01" placeholder="Например, 20"></div>
+    <div class="field"><label for="item">Выбери товар — вес заполнится автоматически</label><select id="item"><option value="">Выбрать товар (необязательно)</option></select></div>
+    <div class="grid">
+      <div class="field"><label for="weight">Вес (г)</label><input id="weight" type="number" min="0" step="1" placeholder="200"></div>
+      <div class="field"><label for="manualKg">Или вес в кг</label><input id="manualKg" type="number" min="0" step="0.001" placeholder="0.200"></div>
+    </div>
+    <div class="result">
+      <small>Ориентировочная итоговая стоимость</small><div class="total" id="total">0 ₽</div>
+      <div class="rows">
+        <div class="r"><span>Товар с комиссией</span><b id="goods">0 ₽</b></div>
+        <div class="r"><span>Комиссия</span><span id="commission">0 ₽</span></div>
+        <div class="r"><span>Доставка</span><b id="delivery">0 ₽</b></div>
+      </div>
+    </div>
+    <div class="hint">Расчёт предварительный. Итог может измениться после уточнения фактического веса.</div>
+  </main>
+  <section class="card adminPanel" id="admin">
+    <h3 class="sectionTitle">Настройки администратора</h3>
+    <div class="grid">
+      <div class="field"><label for="rate">Курс ¥ → ₽</label><input id="rate" type="number" min="0" step="0.01"></div>
+      <div class="field"><label for="percent">Комиссия, %</label><input id="percent" type="number" min="0" step="0.1"></div>
+      <div class="field"><label for="shipping">Доставка за 1 кг, ₽</label><input id="shipping" type="number" min="0" step="1"></div>
+      <div class="field"><label for="pass">Пароль администратора (демо)</label><input id="pass" type="password" placeholder="Задайте пароль"></div>
+    </div>
+    <h3 class="sectionTitle" style="margin-top:20px">Таблица товаров и веса</h3>
+    <div id="weightRows"></div>
+    <div class="actions"><button class="secondary" id="addWeight">＋ Добавить товар</button><button class="primary" id="save">Сохранить настройки</button><button class="secondary" id="closeAdmin">Закрыть</button></div>
+    <p class="notice">Демо-версия: настройки хранятся в браузере на этом устройстве. Для общего сайта, чтобы изменения администратора видели все посетители, понадобится подключить бесплатную базу данных/серверную часть и защитить вход администратора.</p>
+  </section>
+</div>
+<script>
+const defaults={rate:12,percent:15,shipping:650,password:"1234",weights:[["Футболка",200],["Топ",150],["Худи",700],["Джинсы",600],["Куртка",1000],["Кроссовки",900],["Сумка",500]]};
+let cfg;
+try{cfg=JSON.parse(localStorage.getItem("chinaCalcSettings"))||structuredClone(defaults)}catch(e){cfg=structuredClone(defaults)}
+const $=id=>document.getElementById(id);
+function rub(n){return (Number(n)||0).toLocaleString("ru-RU",{maximumFractionDigits:2})+" ₽"}
+function renderSelect(){const sel=$("item");sel.innerHTML='<option value="">Выбрать товар (необязательно)</option>';cfg.weights.forEach(([name,w])=>{const o=document.createElement("option");o.value=w;o.textContent=name+" — "+w+" г";sel.appendChild(o)})}
+function renderRows(){const box=$("weightRows");box.innerHTML="";cfg.weights.forEach((row,i)=>{const div=document.createElement("div");div.className="weights";div.innerHTML='<input aria-label="Название товара" value="'+String(row[0]).replaceAll('"','&quot;')+'"><input aria-label="Вес в граммах" type="number" min="0" value="'+Number(row[1])+'"><button class="remove" aria-label="Удалить товар">×</button>';div.querySelector("button").onclick=()=>{cfg.weights.splice(i,1);renderRows();renderSelect()};div.querySelectorAll("input")[0].onchange=e=>{cfg.weights[i][0]=e.target.value;renderSelect()};div.querySelectorAll("input")[1].onchange=e=>{cfg.weights[i][1]=Number(e.target.value)||0;renderSelect()};box.appendChild(div)})}
+function fillAdmin(){$("rate").value=cfg.rate;$("percent").value=cfg.percent;$("shipping").value=cfg.shipping;$("pass").value=cfg.password;renderRows();renderSelect()}
+function calc(){const price=Number($("price").value)||0;let g=price*cfg.rate;let fee=g*cfg.percent/100;let grams=Number($("manualKg").value)>0?Number($("manualKg").value)*1000:(Number($("weight").value)||0);let ship=grams/1000*cfg.shipping;let total=g+fee+ship;$("goods").textContent=rub(g);$("commission").textContent=rub(fee);$("delivery").textContent=rub(ship);$("total").textContent=rub(total)}
+$("item").onchange=()=>{if($("item").value){$("weight").value=$("item").value;$("manualKg").value=""}calc()};
+$("weight").oninput=()=>{$("manualKg").value="";calc()};$("manualKg").oninput=()=>{$("weight").value="";calc()};$("price").oninput=calc;
+$("adminOpen").onclick=()=>{const p=prompt("Введите пароль администратора");if(p===cfg.password){$("admin").classList.add("open");fillAdmin()}else if(p!==null)alert("Неверный пароль")};
+$("addWeight").onclick=()=>{cfg.weights.push(["Новый товар",0]);renderRows();renderSelect()};
+$("save").onclick=()=>{cfg.rate=Number($("rate").value)||0;cfg.percent=Number($("percent").value)||0;cfg.shipping=Number($("shipping").value)||0;cfg.password=$("pass").value||"1234";localStorage.setItem("chinaCalcSettings",JSON.stringify(cfg));renderSelect();calc();alert("Сохранено в этом браузере")};
+$("closeAdmin").onclick=()=>$("admin").classList.remove("open");
+renderSelect();calc();
+</script>
+</body></html>
